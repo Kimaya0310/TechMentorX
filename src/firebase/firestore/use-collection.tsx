@@ -1,3 +1,4 @@
+
 'use client';
 
 import { useState, useEffect } from 'react';
@@ -16,14 +17,16 @@ import {
   DocumentData,
   FirestoreError,
   QuerySnapshot,
+  WhereFilterOp,
+  OrderByDirection,
 } from 'firebase/firestore';
 import { useFirestore } from '../provider';
 import { errorEmitter } from '../error-emitter';
 import { FirestorePermissionError } from '../errors';
 
 export interface UseCollectionOptions {
-  where?: [string, any, any][];
-  orderBy?: [string, 'asc' | 'desc'];
+  where?: [string, WhereFilterOp, any][];
+  orderBy?: [string, OrderByDirection];
   limit?: number;
   startAfter?: any;
   endBefore?: any;

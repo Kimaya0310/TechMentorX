@@ -22,18 +22,28 @@ import { Loader2, PlusCircle } from "lucide-react";
 import { useState } from "react";
 import { NewDonationDialog } from "@/components/new-donation-dialog";
 import { useUser } from "@/firebase/auth/use-user";
-import { useCollection } from "@/firebase/firestore/use-collection";
+import { useCollection, type UseCollectionOptions } from "@/firebase/firestore/use-collection";
 import type { Donation } from "@/lib/types";
 import { format } from "date-fns";
 
 function DonationsList() {
     const { user } = useUser();
+    
+    const options: UseCollectionOptions = {};
+    
+    if (user?.role === 'ngo') {
+        // NGOs see available requests
+        options.where = [['status', '==', 'requested']];
+        options.orderBy = ['urgencyLevel', 'desc'];
+    } else {
+        // Donors see their own donations
+        options.where = [['donorId', '==', user?.uid || '']];
+        options.orderBy = ['createdAt', 'desc'];
+    }
+
     const { data: donations, loading, error } = useCollection<Donation>(
         user ? 'donations' : null,
-        { 
-            where: [['donorId', '==', user?.uid]],
-            orderBy: ['createdAt', 'desc'],
-        }
+        options
     );
 
     if (loading) {
@@ -51,7 +61,8 @@ function DonationsList() {
     }
     
     if (!donations || donations.length === 0) {
-        return <TableRow><TableCell colSpan={5} className="h-24 text-center">No donations found. Make your first one!</TableCell></TableRow>;
+        const message = user?.role === 'ngo' ? 'No new donation requests at this time.' : 'No donations found. Make your first one!';
+        return <TableRow><TableCell colSpan={5} className="h-24 text-center">{message}</TableCell></TableRow>;
     }
 
     return (
@@ -69,7 +80,7 @@ function DonationsList() {
                     </Badge>
                   </TableCell>
                   <TableCell>{donation.createdAt ? format(new Date(donation.createdAt as any), 'PPP') : 'N/A'}</TableCell>
-                  <TableCell>{donation.recipient || 'Pending Assignment'}</TableCell>
+                  <TableCell>{user?.role === 'ngo' ? donation.location : (donation.recipient || 'Pending Assignment')}</TableCell>
                 </TableRow>
               ))}
         </>
@@ -79,23 +90,30 @@ function DonationsList() {
 
 export default function DonationsPage() {
   const [isDialogOpen, setIsDialogOpen] = useState(false);
+  const { user } = useUser();
 
   return (
     <>
       <NewDonationDialog open={isDialogOpen} onOpenChange={setIsDialogOpen} />
       <div className="flex flex-col gap-6">
         <div className="flex items-center justify-between">
-            <h1 className="font-headline text-3xl font-bold">Donation Management</h1>
-            <Button onClick={() => setIsDialogOpen(true)}>
-            <PlusCircle className="mr-2 h-4 w-4" />
-            New Donation
-            </Button>
+            <h1 className="font-headline text-3xl font-bold">
+                {user?.role === 'ngo' ? 'Available Donations' : 'Donation Management'}
+            </h1>
+            {user?.role !== 'ngo' && (
+                <Button onClick={() => setIsDialogOpen(true)}>
+                    <PlusCircle className="mr-2 h-4 w-4" />
+                    New Donation
+                </Button>
+            )}
         </div>
         
         <Card>
             <CardHeader>
-            <CardTitle className="font-headline">Your Donations</CardTitle>
-            <CardDescription>Track the lifecycle of all your contributions.</CardDescription>
+                <CardTitle className="font-headline">{user?.role === 'ngo' ? 'Donation Requests' : 'Your Donations'}</CardTitle>
+                <CardDescription>
+                    {user?.role === 'ngo' ? 'Review and accept available donation requests from donors.' : 'Track the lifecycle of all your contributions.'}
+                </CardDescription>
             </CardHeader>
             <CardContent>
             <Table>
@@ -105,7 +123,7 @@ export default function DonationsPage() {
                     <TableHead>Items</TableHead>
                     <TableHead>Status</TableHead>
                     <TableHead>Date</TableHead>
-                    <TableHead>Recipient NGO</TableHead>
+                    <TableHead>{user?.role === 'ngo' ? 'Location' : 'Recipient NGO'}</TableHead>
                 </TableRow>
                 </TableHeader>
                 <TableBody>
