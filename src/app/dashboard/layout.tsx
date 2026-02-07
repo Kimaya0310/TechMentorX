@@ -88,15 +88,16 @@ export default function DashboardLayout({
             <SidebarMenu>
               {currentNavItems.map((item) => (
                 <SidebarMenuItem key={item.href}>
-                  <Link href={item.href} legacyBehavior passHref>
-                    <SidebarMenuButton
-                      isActive={pathname.startsWith(item.href) && (item.href !== '/dashboard' || pathname === '/dashboard')}
-                      tooltip={item.label}
-                    >
+                  <SidebarMenuButton
+                    asChild
+                    isActive={pathname.startsWith(item.href) && (item.href !== '/dashboard' || pathname === '/dashboard')}
+                    tooltip={item.label}
+                  >
+                    <Link href={item.href}>
                       <item.icon />
                       <span>{item.label}</span>
-                    </SidebarMenuButton>
-                  </Link>
+                    </Link>
+                  </SidebarMenuButton>
                 </SidebarMenuItem>
               ))}
             </SidebarMenu>
@@ -104,15 +105,16 @@ export default function DashboardLayout({
           <SidebarFooter className="border-t">
             <SidebarMenu>
               <SidebarMenuItem>
-                <Link href="/settings" legacyBehavior passHref>
-                    <SidebarMenuButton
-                      isActive={pathname.startsWith('/settings')}
-                      tooltip="Settings"
-                    >
-                      <Settings />
-                      <span>Settings</span>
-                    </SidebarMenuButton>
+                <SidebarMenuButton
+                  asChild
+                  isActive={pathname.startsWith('/settings')}
+                  tooltip="Settings"
+                >
+                  <Link href="/settings">
+                    <Settings />
+                    <span>Settings</span>
                   </Link>
+                </SidebarMenuButton>
               </SidebarMenuItem>
             </SidebarMenu>
           </SidebarFooter>
