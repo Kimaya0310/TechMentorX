@@ -28,6 +28,11 @@
           "items": { "type": "string" },
           "description": "List of skills for volunteers (e.g., Driving, Teaching, Medical)."
         },
+        "points": {
+            "type": "number",
+            "description": "Gamification points earned by the user.",
+            "default": 0
+        },
         "languagePreference": {
             "type": "string",
             "enum": ["en", "hi", "mr"],
@@ -107,6 +112,49 @@
       },
       "required": ["donorId", "items", "location", "condition", "status"]
     },
+    "Request": {
+        "title": "Assistance Request",
+        "description": "A request for assistance made by a beneficiary.",
+        "type": "object",
+        "properties": {
+            "userId": { "type": "string", "description": "The UID of the beneficiary making the request." },
+            "category": { "type": "string", "enum": ["essentials", "disabilitySupport", "other"] },
+            "description": { "type": "string", "description": "Details of what is needed." },
+            "status": { "type": "string", "enum": ["pending", "assigned", "completed", "cancelled"], "default": "pending" },
+            "createdAt": { "type": "string", "format": "date-time" },
+            "assignedVolunteerId": { "type": "string", "description": "The UID of the assigned volunteer." },
+            "fulfillingNgoId": { "type": "string", "description": "The UID of the fulfilling NGO." },
+            "location": { "type": "string" }
+        },
+        "required": ["userId", "category", "description", "status", "createdAt", "location"]
+    },
+    "Task": {
+        "title": "Volunteer Task",
+        "description": "A task assigned to a volunteer.",
+        "type": "object",
+        "properties": {
+            "title": { "type": "string" },
+            "volunteerId": { "type": "string", "description": "The UID of the assigned volunteer." },
+            "ngoId": { "type": "string", "description": "The UID of the assigning NGO." },
+            "requestId": { "type": "string", "description": "The ID of the Assistance Request this task is for." },
+            "status": { "type": "string", "enum": ["assigned", "in-progress", "completed", "verified"], "default": "assigned" },
+            "checklist": {
+                "type": "array",
+                "items": {
+                    "type": "object",
+                    "properties": {
+                        "label": { "type": "string" },
+                        "completed": { "type": "boolean" }
+                    },
+                    "required": ["label", "completed"]
+                }
+            },
+            "date": { "type": "string", "format": "date" },
+            "location": { "type": "string" },
+            "createdAt": { "type": "string", "format": "date-time" }
+        },
+        "required": ["title", "volunteerId", "ngoId", "status", "checklist", "date", "location", "createdAt"]
+    },
     "CSRProject": {
       "title": "CSR Project",
       "description": "A project funded or sponsored by a company.",
@@ -140,6 +188,14 @@
     "/donations/{donationId}": {
       "schema": { "$ref": "#/entities/Donation" },
       "description": "Manages all donations on the platform."
+    },
+    "/requests/{requestId}": {
+        "schema": { "$ref": "#/entities/Request" },
+        "description": "Stores assistance requests from beneficiaries."
+    },
+    "/tasks/{taskId}": {
+        "schema": { "$ref": "#/entities/Task" },
+        "description": "Stores tasks assigned to volunteers."
     },
     "/csr-projects/{projectId}": {
       "schema": { "$ref": "#/entities/CSRProject" },

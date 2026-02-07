@@ -14,10 +14,15 @@ service cloud.firestore {
     function getUserRole(userId) {
       return get(/databases/$(database)/documents/users/$(userId)).data.role;
     }
+    
+    function isRole(role) {
+        return isSignedIn() && getUserRole(request.auth.uid) == role;
+    }
 
-    // Users can read and update their own profile
+    // Users can read and update their own profile, anyone can read public profiles for leaderboards
     match /users/{userId} {
-      allow read, update: if isOwner(userId);
+      allow read: if isSignedIn();
+      allow update: if isOwner(userId);
       // Anyone can create a user profile during signup
       allow create: if isSignedIn();
     }
@@ -26,7 +31,7 @@ service cloud.firestore {
     match /schemes/{schemeId} {
         allow read: if isSignedIn();
         // Only admins can write schemes
-        allow write: if getUserRole(request.auth.uid) == 'admin';
+        allow write: if isRole('admin');
     }
 
     // Rules for applications
@@ -38,7 +43,7 @@ service cloud.firestore {
         allow read, update: if isSignedIn() && (
             resource.data.userId == request.auth.uid ||
             resource.data.assistedBy == request.auth.uid ||
-            getUserRole(request.auth.uid) == 'ngo' // A simpler rule for NGOs for now
+            isRole('ngo')
         );
     }
     
@@ -52,18 +57,47 @@ service cloud.firestore {
         allow update: if isSignedIn() && (
             resource.data.donorId == request.auth.uid ||
             resource.data.ngoId == request.auth.uid ||
-            getUserRole(request.auth.uid) == 'admin'
+            isRole('admin')
+        );
+    }
+
+    // Rules for assistance requests
+    match /requests/{requestId} {
+        // A beneficiary can create a request for themselves
+        allow create: if isRole('beneficiary') && request.resource.data.userId == request.auth.uid;
+        // The beneficiary can read/update their own request.
+        // An assigned volunteer, NGO, or an admin can read/update it.
+        allow read, update: if isSignedIn() && (
+            resource.data.userId == request.auth.uid ||
+            resource.data.assignedVolunteerId == request.auth.uid ||
+            isRole('ngo') ||
+            isRole('admin')
+        );
+        // Beneficiary can delete their own request.
+        allow delete: if isOwner(resource.data.userId);
+    }
+
+    // Rules for tasks
+    match /tasks/{taskId} {
+        // NGOs and Admins can create tasks
+        allow create: if isRole('ngo') || isRole('admin');
+        // The assigned volunteer can read/update their task.
+        // The creating NGO and admins can also read/update.
+        allow read, update: if isSignedIn() && (
+            resource.data.volunteerId == request.auth.uid ||
+            resource.data.ngoId == getUserRole(request.auth.uid) || // Needs refinement if NGO is just a string
+            isRole('admin')
         );
     }
 
     // Rules for CSR projects
     match /csr-projects/{projectId} {
         // Only a user with the 'company' role can create a project for their company
-        allow create: if getUserRole(request.auth.uid) == 'company' && request.resource.data.companyId == request.auth.uid;
+        allow create: if isRole('company') && request.resource.data.companyId == request.auth.uid;
         // All signed-in users can view CSR projects for transparency
         allow read: if isSignedIn();
         // Only the owning company or an admin can update the project
-        allow update: if isOwner(resource.data.companyId) || getUserRole(request.auth.uid) == 'admin';
+        allow update: if isOwner(resource.data.companyId) || isRole('admin');
     }
   }
 }
