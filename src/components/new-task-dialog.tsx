@@ -27,6 +27,8 @@ import { CalendarIcon } from "lucide-react";
 import { Calendar } from "./ui/calendar";
 import { format } from "date-fns";
 import { cn } from "@/lib/utils";
+import { errorEmitter } from "@/firebase/error-emitter";
+import { FirestorePermissionError } from "@/firebase/errors";
 
 interface NewTaskDialogProps {
     open: boolean;
@@ -67,27 +69,36 @@ export function NewTaskDialog({ open, onOpenChange }: NewTaskDialogProps) {
         return;
     }
     setLoading(true);
-    try {
-        const tasksCollection = collection(firestore, 'tasks');
-        await addDoc(tasksCollection, {
-            title,
-            volunteerId,
-            ngoId: user.uid,
-            location,
-            date: Timestamp.fromDate(date),
-            status: 'assigned',
-            checklist: checklist.split('\n').filter(item => item.trim() !== '').map(label => ({ label, completed: false })),
-            createdAt: serverTimestamp(),
+
+    const taskData = {
+        title,
+        volunteerId,
+        ngoId: user.uid,
+        location,
+        date: Timestamp.fromDate(date),
+        status: 'assigned',
+        checklist: checklist.split('\n').filter(item => item.trim() !== '').map(label => ({ label, completed: false })),
+        createdAt: serverTimestamp(),
+    };
+
+    const tasksCollection = collection(firestore, 'tasks');
+    addDoc(tasksCollection, taskData)
+        .then(() => {
+            toast({ title: 'Task Assigned', description: 'The volunteer has been notified.' });
+            onOpenChange(false);
+            resetForm();
+        })
+        .catch((serverError) => {
+            const permissionError = new FirestorePermissionError({
+                path: tasksCollection.path,
+                operation: 'create',
+                requestResourceData: taskData
+            }, serverError);
+            errorEmitter.emit('permission-error', permissionError);
+        })
+        .finally(() => {
+            setLoading(false);
         });
-        toast({ title: 'Task Assigned', description: 'The volunteer has been notified.' });
-        onOpenChange(false);
-        resetForm();
-    } catch (error: any) {
-        console.error("Task assignment failed:", error);
-        toast({ variant: 'destructive', title: 'Assignment Failed', description: error.message });
-    } finally {
-        setLoading(false);
-    }
   };
 
   return (

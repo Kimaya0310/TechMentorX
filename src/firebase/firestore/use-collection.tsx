@@ -18,6 +18,8 @@ import {
   QuerySnapshot,
 } from 'firebase/firestore';
 import { useFirestore } from '../provider';
+import { errorEmitter } from '../error-emitter';
+import { FirestorePermissionError } from '../errors';
 
 export interface UseCollectionOptions {
   where?: [string, any, any][];
@@ -29,7 +31,7 @@ export interface UseCollectionOptions {
 }
 
 export function useCollection<T = DocumentData>(
-  collectionPath: string,
+  collectionPath: string | null,
   options: UseCollectionOptions = {}
 ) {
   const firestore = useFirestore();
@@ -38,13 +40,20 @@ export function useCollection<T = DocumentData>(
   const [error, setError] = useState<FirestoreError | null>(null);
 
   useEffect(() => {
-    if (!firestore) return;
+    if (!firestore || !collectionPath) {
+        setLoading(false);
+        setData(null);
+        return;
+    }
 
     let q: Query<DocumentData> = collection(firestore, collectionPath);
 
     if (options.where) {
       options.where.forEach((w) => {
-        q = query(q, where(w[0], w[1], w[2]));
+        // Do not add where clauses with empty values, as it throws an error
+        if (w[2] !== '' && w[2] !== undefined && w[2] !== null) {
+          q = query(q, where(w[0], w[1], w[2]));
+        }
       });
     }
 
@@ -67,8 +76,6 @@ export function useCollection<T = DocumentData>(
     if (options.limit) {
       q = query(q, limit(options.limit));
     } else if (options.endBefore) {
-      // When using endBefore, we usually want the last N documents.
-      // You might need to adjust this logic based on your pagination needs.
       q = query(q, limitToLast(25)); 
     }
 
@@ -81,9 +88,14 @@ export function useCollection<T = DocumentData>(
         );
         setData(docs);
         setLoading(false);
+        setError(null);
       },
       (err: FirestoreError) => {
-        console.error(err);
+        const permissionError = new FirestorePermissionError({
+            path: collectionPath,
+            operation: 'list',
+        }, err);
+        errorEmitter.emit('permission-error', permissionError);
         setError(err);
         setLoading(false);
       }

@@ -31,7 +31,7 @@ function DonationsList() {
     const { data: donations, loading, error } = useCollection<Donation>(
         user ? 'donations' : null,
         { 
-            where: [['donorId', '==', user?.uid || '']],
+            where: [['donorId', '==', user?.uid]],
             orderBy: ['createdAt', 'desc'],
         }
     );
@@ -68,7 +68,7 @@ function DonationsList() {
                       {donation.status.replace('-', ' ')}
                     </Badge>
                   </TableCell>
-                  <TableCell>{donation.createdAt ? format(donation.createdAt.toDate(), 'PPP') : 'N/A'}</TableCell>
+                  <TableCell>{donation.createdAt ? format(new Date(donation.createdAt as any), 'PPP') : 'N/A'}</TableCell>
                   <TableCell>{donation.recipient || 'Pending Assignment'}</TableCell>
                 </TableRow>
               ))}

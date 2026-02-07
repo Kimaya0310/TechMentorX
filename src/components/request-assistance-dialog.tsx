@@ -19,6 +19,8 @@ import { useState } from "react";
 import { Loader2 } from "lucide-react";
 import { addDoc, collection, serverTimestamp } from "firebase/firestore";
 import { useFirestore } from "@/firebase";
+import { errorEmitter } from "@/firebase/error-emitter";
+import { FirestorePermissionError } from "@/firebase/errors";
 
 interface RequestAssistanceDialogProps {
     open: boolean;
@@ -44,26 +46,35 @@ export function RequestAssistanceDialog({ open, onOpenChange, category }: Reques
         return;
     }
     setLoading(true);
-    try {
-        const requestsCollection = collection(firestore, 'requests');
-        await addDoc(requestsCollection, {
-            userId: user.uid,
-            category,
-            description,
-            location,
-            status: 'pending',
-            createdAt: serverTimestamp(),
+
+    const requestData = {
+        userId: user.uid,
+        category,
+        description,
+        location,
+        status: 'pending',
+        createdAt: serverTimestamp(),
+    };
+    
+    const requestsCollection = collection(firestore, 'requests');
+    addDoc(requestsCollection, requestData)
+        .then(() => {
+            toast({ title: 'Request Submitted', description: 'Your request has been sent to nearby NGOs.' });
+            onOpenChange(false);
+            setDescription('');
+            setLocation('');
+        })
+        .catch((serverError) => {
+            const permissionError = new FirestorePermissionError({
+                path: requestsCollection.path,
+                operation: 'create',
+                requestResourceData: requestData
+            }, serverError);
+            errorEmitter.emit('permission-error', permissionError);
+        })
+        .finally(() => {
+            setLoading(false);
         });
-        toast({ title: 'Request Submitted', description: 'Your request has been sent to nearby NGOs.' });
-        onOpenChange(false);
-        setDescription('');
-        setLocation('');
-    } catch (error: any) {
-        console.error("Request submission failed:", error);
-        toast({ variant: 'destructive', title: 'Submission Failed', description: error.message });
-    } finally {
-        setLoading(false);
-    }
   };
 
   return (

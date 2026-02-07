@@ -15,7 +15,7 @@ function MyRequests() {
     const { user } = useUser();
     const { data: requests, loading, error } = useCollection<Request>(
         user ? `requests` : null,
-        { where: [['userId', '==', user?.uid || '']] }
+        { where: [['userId', '==', user?.uid]] }
     );
 
     if (loading) {
@@ -37,7 +37,7 @@ function MyRequests() {
                     <div>
                         <p className="font-medium capitalize">{request.category.replace('Support', ' Support')}</p>
                         <p className="text-sm text-muted-foreground">
-                            Requested on {format(request.createdAt.toDate(), 'PPP')}
+                            Requested on {format(new Date(request.createdAt as any), 'PPP')}
                         </p>
                     </div>
                     <Badge variant={request.status === 'completed' ? 'default' : 'secondary'} className={request.status === 'completed' ? 'bg-green-600 text-white' : ''}>

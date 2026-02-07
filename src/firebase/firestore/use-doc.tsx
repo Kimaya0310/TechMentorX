@@ -8,8 +8,10 @@ import {
   FirestoreError,
 } from 'firebase/firestore';
 import { useFirestore } from '../provider';
+import { errorEmitter } from '../error-emitter';
+import { FirestorePermissionError } from '../errors';
 
-export function useDoc<T = DocumentData>(docPath: string) {
+export function useDoc<T = DocumentData>(docPath: string | null) {
   const firestore = useFirestore();
   const [data, setData] = useState<T | null>(null);
   const [loading, setLoading] = useState(true);
@@ -18,6 +20,7 @@ export function useDoc<T = DocumentData>(docPath: string) {
   useEffect(() => {
     if (!firestore || !docPath) {
         setLoading(false);
+        setData(null);
         return;
     };
 
@@ -32,9 +35,14 @@ export function useDoc<T = DocumentData>(docPath: string) {
           setData(null); // Document does not exist
         }
         setLoading(false);
+        setError(null);
       },
       (err: FirestoreError) => {
-        console.error(err);
+        const permissionError = new FirestorePermissionError({
+            path: docPath,
+            operation: 'get',
+        }, err);
+        errorEmitter.emit('permission-error', permissionError);
         setError(err);
         setLoading(false);
       }

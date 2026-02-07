@@ -26,6 +26,8 @@ import { getAuth, createUserWithEmailAndPassword } from "firebase/auth";
 import { getFirestore, doc, setDoc } from "firebase/firestore";
 import { useToast } from "@/hooks/use-toast";
 import { Loader2 } from "lucide-react";
+import { errorEmitter } from "@/firebase/error-emitter";
+import { FirestorePermissionError } from "@/firebase/errors";
 
 export default function SignupPage() {
   const router = useRouter();
@@ -45,8 +47,7 @@ export default function SignupPage() {
       const userCredential = await createUserWithEmailAndPassword(auth, email, password);
       const user = userCredential.user;
 
-      // Now, create a user profile document in Firestore
-      await setDoc(doc(firestore, "users", user.uid), {
+      const userProfileData = {
         uid: user.uid,
         displayName: fullName,
         email: user.email,
@@ -60,12 +61,25 @@ export default function SignupPage() {
           schemeAlerts: false,
           emergencyAlerts: true
         }
-      });
+      };
+
+      const userDocRef = doc(firestore, "users", user.uid);
       
-      router.push('/dashboard');
+      setDoc(userDocRef, userProfileData)
+        .then(() => {
+            router.push('/dashboard');
+        })
+        .catch((serverError) => {
+            const permissionError = new FirestorePermissionError({
+                path: userDocRef.path,
+                operation: 'create',
+                requestResourceData: userProfileData
+            }, serverError);
+            errorEmitter.emit('permission-error', permissionError);
+            setLoading(false);
+        });
 
     } catch (error: any) {
-      console.error("Signup failed:", error);
       let description = "An unexpected error occurred. Please try again.";
       if (error.code === 'auth/email-already-in-use') {
           description = "This email address is already in use by another account.";
@@ -79,7 +93,6 @@ export default function SignupPage() {
         title: "Signup Failed",
         description: description,
       });
-    } finally {
       setLoading(false);
     }
   };

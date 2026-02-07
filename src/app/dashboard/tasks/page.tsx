@@ -17,6 +17,8 @@ import { useFirestore } from "@/firebase";
 import { doc, updateDoc } from "firebase/firestore";
 import { useToast } from "@/hooks/use-toast";
 import { format } from "date-fns";
+import { errorEmitter } from "@/firebase/error-emitter";
+import { FirestorePermissionError } from "@/firebase/errors";
 
 export default function TasksPage() {
   const { user } = useUser();
@@ -28,7 +30,7 @@ export default function TasksPage() {
     { where: [['volunteerId', '==', user?.uid || '']] }
   );
 
-  const handleChecklistChange = async (taskId: string, itemIndex: number, completed: boolean) => {
+  const handleChecklistChange = (taskId: string, itemIndex: number, completed: boolean) => {
     if (!firestore || !tasks) return;
 
     const task = tasks.find(t => t.id === taskId);
@@ -37,21 +39,24 @@ export default function TasksPage() {
     const updatedChecklist = [...task.checklist];
     updatedChecklist[itemIndex].completed = completed;
     
-    try {
-        const taskDocRef = doc(firestore, "tasks", taskId);
-        await updateDoc(taskDocRef, { checklist: updatedChecklist });
-        toast({
-            title: "Progress Saved",
-            description: "Your checklist has been updated."
+    const taskDocRef = doc(firestore, "tasks", taskId);
+    const updateData = { checklist: updatedChecklist };
+
+    updateDoc(taskDocRef, updateData)
+        .then(() => {
+            toast({
+                title: "Progress Saved",
+                description: "Your checklist has been updated."
+            })
         })
-    } catch (error) {
-        console.error("Failed to update task:", error);
-        toast({
-            variant: "destructive",
-            title: "Update failed",
-            description: "Could not save your progress. Please try again.",
+        .catch((serverError) => {
+            const permissionError = new FirestorePermissionError({
+                path: taskDocRef.path,
+                operation: 'update',
+                requestResourceData: updateData
+            }, serverError);
+            errorEmitter.emit('permission-error', permissionError);
         });
-    }
   };
 
   return (
@@ -83,7 +88,7 @@ export default function TasksPage() {
                             <MapPin className="h-4 w-4" /> {task.location}
                         </span>
                         <span className="flex items-center gap-2">
-                            <Calendar className="h-4 w-4" /> {task.date ? format(task.date.toDate(), 'PPP') : 'No date'}
+                            <Calendar className="h-4 w-4" /> {task.date ? format(new Date(task.date as any), 'PPP') : 'No date'}
                         </span>
                     </CardDescription>
                 </CardHeader>

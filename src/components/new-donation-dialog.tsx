@@ -20,6 +20,8 @@ import { useState } from "react";
 import { Loader2 } from "lucide-react";
 import { addDoc, collection, serverTimestamp } from "firebase/firestore";
 import { useFirestore } from "@/firebase";
+import { errorEmitter } from "@/firebase/error-emitter";
+import { FirestorePermissionError } from "@/firebase/errors";
 
 interface NewDonationDialogProps {
     open: boolean;
@@ -54,26 +56,36 @@ export function NewDonationDialog({ open, onOpenChange }: NewDonationDialogProps
         return;
     }
     setLoading(true);
-    try {
-        const donationsCollection = collection(firestore, 'donations');
-        await addDoc(donationsCollection, {
-            donorId: user.uid,
-            items: items.split('\n').filter(item => item.trim() !== ''),
-            location,
-            condition,
-            urgencyLevel: urgency,
-            status: 'requested',
-            createdAt: serverTimestamp(),
+
+    const donationData = {
+        donorId: user.uid,
+        items: items.split('\n').filter(item => item.trim() !== ''),
+        location,
+        condition,
+        urgencyLevel: urgency,
+        status: 'requested',
+        createdAt: serverTimestamp(),
+    };
+
+    const donationsCollection = collection(firestore, 'donations');
+    
+    addDoc(donationsCollection, donationData)
+        .then(() => {
+            toast({ title: 'Donation Submitted', description: 'Your donation has been registered. An NGO will be in touch shortly.' });
+            onOpenChange(false);
+            resetForm();
+        })
+        .catch((serverError) => {
+            const permissionError = new FirestorePermissionError({
+                path: donationsCollection.path,
+                operation: 'create',
+                requestResourceData: donationData
+            }, serverError);
+            errorEmitter.emit('permission-error', permissionError);
+        })
+        .finally(() => {
+            setLoading(false);
         });
-        toast({ title: 'Donation Submitted', description: 'Your donation has been registered. An NGO will be in touch shortly.' });
-        onOpenChange(false);
-        resetForm();
-    } catch (error: any) {
-        console.error("Donation submission failed:", error);
-        toast({ variant: 'destructive', title: 'Submission Failed', description: error.message });
-    } finally {
-        setLoading(false);
-    }
   };
 
   return (
