@@ -1,4 +1,5 @@
 
+
 "use client";
 
 import Link from "next/link";
@@ -23,7 +24,9 @@ import {
   LayoutDashboard,
   ListChecks,
   Settings,
-  LifeBuoy,
+  Building,
+  Users,
+  Briefcase,
 } from "lucide-react";
 import { UserNav } from "@/components/user-nav";
 
@@ -36,12 +39,43 @@ const navItems = [
   { href: "/welfare-schemes", label: "Welfare Schemes", icon: BotMessageSquare },
 ];
 
+const getNavItemsByRole = (role?: string) => {
+  switch (role) {
+    case 'ngo':
+      return [
+        { href: "/dashboard/ngo", label: "NGO Dashboard", icon: Building },
+        { href: "/dashboard/donations", label: "Donation Requests", icon: HeartHandshake },
+      ];
+    case 'beneficiary':
+      return [
+        { href: "/dashboard/beneficiary", label: "Beneficiary Hub", icon: Users },
+        { href: "/welfare-schemes", label: "Find Schemes", icon: BotMessageSquare },
+      ];
+    case 'volunteer':
+        return [
+          { href: "/dashboard/volunteer", label: "Volunteer Tasks", icon: ListChecks },
+          { href: "/dashboard/rewards", label: "My Rewards", icon: Award },
+        ];
+    case 'company':
+        return [
+          { href: "/dashboard/company", label: "CSR Dashboard", icon: Briefcase },
+          { href: "/organizations", label: "Partners", icon: Building },
+        ];
+    default:
+      return navItems;
+  }
+}
+
+
 export default function DashboardLayout({
   children,
 }: {
   children: React.ReactNode;
 }) {
   const pathname = usePathname();
+  const role = pathname.split('/')[2]; // a bit of a hack for now
+  const currentNavItems = getNavItemsByRole(role);
+
 
   return (
     <SidebarProvider>
@@ -52,7 +86,7 @@ export default function DashboardLayout({
           </SidebarHeader>
           <SidebarContent>
             <SidebarMenu>
-              {navItems.map((item) => (
+              {currentNavItems.map((item) => (
                 <SidebarMenuItem key={item.href}>
                   <Link href={item.href} legacyBehavior passHref>
                     <SidebarMenuButton
