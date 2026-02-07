@@ -1,9 +1,12 @@
+
 'use client';
 
 import { createContext, useContext, useEffect, useState, useMemo } from 'react';
 import { onAuthStateChanged, User } from 'firebase/auth';
-import { doc, onSnapshot, DocumentData, Firestore } from 'firebase/firestore';
+import { doc, onSnapshot, DocumentData, Firestore, FirestoreError } from 'firebase/firestore';
 import { useAuth, useFirestore } from '@/firebase/provider';
+import { errorEmitter } from '../error-emitter';
+import { FirestorePermissionError } from '../errors';
 
 // Augment the Firebase User type with our custom profile data
 export type AppUser = User & DocumentData;
@@ -22,6 +25,7 @@ export const UserProvider = ({ children }: { children: React.ReactNode }) => {
   useEffect(() => {
     if (!auth || !firestore) {
       // Firebase services might not be available yet
+      setLoading(false);
       return;
     }
 
@@ -29,17 +33,33 @@ export const UserProvider = ({ children }: { children: React.ReactNode }) => {
       if (authUser) {
         // User is signed in, listen to their profile document
         const userDocRef = doc(firestore as Firestore, `users/${authUser.uid}`);
-        const unsubSnapshot = onSnapshot(userDocRef, (userDoc) => {
-          if (userDoc.exists()) {
-            // Combine auth data with Firestore data
-            setUser({ ...authUser, ...userDoc.data() } as AppUser);
-          } else {
-            // This case can happen during signup before the doc is created
-            // or if the doc is deleted. We'll provide the basic auth user.
+        const unsubSnapshot = onSnapshot(
+          userDocRef,
+          (userDoc) => {
+            if (userDoc.exists()) {
+              // Combine auth data with Firestore data
+              setUser({ ...authUser, ...userDoc.data() } as AppUser);
+            } else {
+              // This case can happen during signup before the doc is created
+              // or if the doc is deleted. We'll provide the basic auth user.
+              setUser(authUser as AppUser);
+            }
+            setLoading(false);
+          },
+          (err: FirestoreError) => {
+            const permissionError = new FirestorePermissionError(
+              {
+                path: userDocRef.path,
+                operation: 'get',
+              },
+              err
+            );
+            errorEmitter.emit('permission-error', permissionError);
+            // Fallback to auth user data on error to avoid breaking the UI
             setUser(authUser as AppUser);
+            setLoading(false);
           }
-          setLoading(false);
-        });
+        );
         return () => unsubSnapshot(); // Unsubscribe from the document snapshot
       } else {
         // User is signed out

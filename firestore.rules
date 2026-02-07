@@ -12,12 +12,9 @@ service cloud.firestore {
       return request.auth != null;
     }
     
-    function getUserRole(userId) {
-      return get(/databases/$(database)/documents/users/$(userId)).data.role;
-    }
-    
     function isRole(role) {
-        return isSignedIn() && getUserRole(request.auth.uid) == role;
+        let userDocPath = /databases/$(database)/documents/users/$(request.auth.uid);
+        return isSignedIn() && exists(userDocPath) && get(userDocPath).data.role == role;
     }
 
     // Users can read and update their own profile, anyone can read public profiles for leaderboards
