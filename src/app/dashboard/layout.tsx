@@ -1,3 +1,4 @@
+
 "use client";
 
 import Link from "next/link";
@@ -25,7 +26,7 @@ import {
   LifeBuoy,
 } from "lucide-react";
 import { UserNav } from "@/components/user-nav";
-import { Button } from "@/components/ui/button";
+
 
 const navItems = [
   { href: "/dashboard", label: "Dashboard", icon: LayoutDashboard },
@@ -55,7 +56,7 @@ export default function DashboardLayout({
                 <SidebarMenuItem key={item.href}>
                   <Link href={item.href} legacyBehavior passHref>
                     <SidebarMenuButton
-                      isActive={pathname === item.href}
+                      isActive={pathname.startsWith(item.href) && (item.href !== '/dashboard' || pathname === '/dashboard')}
                       tooltip={item.label}
                     >
                       <item.icon />
@@ -69,16 +70,15 @@ export default function DashboardLayout({
           <SidebarFooter className="border-t">
             <SidebarMenu>
               <SidebarMenuItem>
-                <SidebarMenuButton tooltip="Help">
-                  <LifeBuoy />
-                  <span>Help</span>
-                </SidebarMenuButton>
-              </SidebarMenuItem>
-              <SidebarMenuItem>
-                <SidebarMenuButton tooltip="Settings">
-                  <Settings />
-                  <span>Settings</span>
-                </SidebarMenuButton>
+                <Link href="/settings" legacyBehavior passHref>
+                    <SidebarMenuButton
+                      isActive={pathname.startsWith('/settings')}
+                      tooltip="Settings"
+                    >
+                      <Settings />
+                      <span>Settings</span>
+                    </SidebarMenuButton>
+                  </Link>
               </SidebarMenuItem>
             </SidebarMenu>
           </SidebarFooter>

@@ -1,20 +1,30 @@
+
 "use client";
 
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
 import { Logo } from "./logo";
 import { Sheet, SheetContent, SheetTrigger } from "./ui/sheet";
-import { Menu } from "lucide-react";
+import { Menu, User } from "lucide-react";
 import { useState } from "react";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from "./ui/dropdown-menu";
 
 const navLinks = [
-  { href: "#features", label: "Features" },
+  { href: "/#facilities", label: "Facilities" },
   { href: "/welfare-schemes", label: "Welfare Schemes" },
   { href: "/#about", label: "About" },
 ];
 
 export function LandingHeader() {
   const [isOpen, setIsOpen] = useState(false);
+  // Mock login state for now.
+  const isLoggedIn = false;
 
   return (
     <header className="absolute top-0 z-50 w-full bg-transparent py-4">
@@ -29,10 +39,37 @@ export function LandingHeader() {
           ))}
         </nav>
 
-        <div className="hidden items-center gap-4 md:flex">
-          <Button asChild variant="ghost" className="text-primary-foreground hover:bg-white/10 hover:text-primary-foreground">
-            <Link href="/login">Log In</Link>
-          </Button>
+        <div className="hidden items-center gap-2 md:flex">
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <Button variant="ghost" size="icon" className="text-primary-foreground hover:bg-white/10 hover:text-primary-foreground">
+                <User />
+                <span className="sr-only">Profile</span>
+              </Button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent align="end">
+              {isLoggedIn ? (
+                <>
+                  <DropdownMenuItem asChild>
+                    <Link href="/settings">Settings</Link>
+                  </DropdownMenuItem>
+                  <DropdownMenuSeparator />
+                  <DropdownMenuItem>
+                    Logout
+                  </DropdownMenuItem>
+                </>
+              ) : (
+                <>
+                  <DropdownMenuItem asChild>
+                    <Link href="/signup">Sign Up</Link>
+                  </DropdownMenuItem>
+                  <DropdownMenuItem asChild>
+                    <Link href="/login">Login</Link>
+                  </DropdownMenuItem>
+                </>
+              )}
+            </DropdownMenuContent>
+          </DropdownMenu>
           <Button asChild className="bg-accent text-accent-foreground hover:bg-accent/90">
             <Link href="/signup">Sign Up</Link>
           </Button>
@@ -56,12 +93,23 @@ export function LandingHeader() {
                   ))}
                 </nav>
                 <div className="mt-6 flex flex-col gap-4">
-                  <Button asChild variant="outline">
-                    <Link href="/login">Log In</Link>
-                  </Button>
-                  <Button asChild>
-                    <Link href="/signup">Sign Up</Link>
-                  </Button>
+                   {isLoggedIn ? (
+                    <>
+                      <Button asChild variant="outline">
+                        <Link href="/settings">Settings</Link>
+                      </Button>
+                      <Button>Logout</Button>
+                    </>
+                  ) : (
+                    <>
+                      <Button asChild variant="outline">
+                        <Link href="/login">Log In</Link>
+                      </Button>
+                      <Button asChild>
+                        <Link href="/signup">Sign Up</Link>
+                      </Button>
+                    </>
+                  )}
                 </div>
               </div>
             </SheetContent>
