@@ -85,7 +85,7 @@ service cloud.firestore {
         // The creating NGO and admins can also read/update.
         allow read, update: if isSignedIn() && (
             resource.data.volunteerId == request.auth.uid ||
-            resource.data.ngoId == getUserRole(request.auth.uid) || // Needs refinement if NGO is just a string
+            (isRole('ngo') && resource.data.ngoId == request.auth.uid) ||
             isRole('admin')
         );
     }

@@ -1,7 +1,6 @@
 
 'use client';
 
-import { useState } from "react";
 import {
   Card,
   CardContent,
@@ -19,71 +18,32 @@ import { doc, updateDoc } from "firebase/firestore";
 import { useToast } from "@/hooks/use-toast";
 import { format } from "date-fns";
 
-
-const initialTasks: Task[] = [
-    {
-        id: "TSK001",
-        title: "Pick up donations from Eastside Collection Point",
-        volunteerId: "user1",
-        ngoId: "ngo1",
-        status: 'assigned',
-        date: "2023-12-05",
-        location: "123 Maple St, Springfield",
-        createdAt: new Date() as any, // Mock timestamp
-        checklist: [
-            { label: "Confirm pickup time with donor", completed: true },
-            { label: "Bring 5 large boxes", completed: true },
-            { label: "Take photos for verification", completed: false },
-        ]
-    },
-    {
-        id: "TSK002",
-        title: "Deliver food packages to City Shelter",
-        volunteerId: "user1",
-        ngoId: "ngo1",
-        status: 'assigned',
-        date: "2023-12-06",
-        location: "456 Oak Ave, Springfield",
-        createdAt: new Date() as any,
-        checklist: [
-            { label: "Collect packages from warehouse", completed: true },
-            { label: "Use provided route for delivery", completed: false },
-            { label: "Get signature from shelter manager", completed: false },
-        ]
-    },
-];
-
 export default function TasksPage() {
   const { user } = useUser();
   const firestore = useFirestore();
   const { toast } = useToast();
-  // In a real app, you would fetch tasks assigned to the user.
-  // We'll use local state for now to demonstrate interactivity.
-  // const { data: tasks, loading } = useCollection<Task>(
-  //   user ? 'tasks' : null,
-  //   { where: [['volunteerId', '==', user?.uid || '']] }
-  // );
-
-  // Using mock data for now as we don't have a way to create tasks yet
-  const [tasks, setTasks] = useState(initialTasks);
-  const loading = false;
-
+  
+  const { data: tasks, loading } = useCollection<Task>(
+    user ? 'tasks' : null,
+    { where: [['volunteerId', '==', user?.uid || '']] }
+  );
 
   const handleChecklistChange = async (taskId: string, itemIndex: number, completed: boolean) => {
-    if (!firestore) return;
-    
+    if (!firestore || !tasks) return;
+
     const task = tasks.find(t => t.id === taskId);
     if (!task) return;
 
     const updatedChecklist = [...task.checklist];
     updatedChecklist[itemIndex].completed = completed;
     
-    // Optimistically update the UI
-    setTasks(tasks.map(t => t.id === taskId ? { ...t, checklist: updatedChecklist } : t));
-
     try {
         const taskDocRef = doc(firestore, "tasks", taskId);
         await updateDoc(taskDocRef, { checklist: updatedChecklist });
+        toast({
+            title: "Progress Saved",
+            description: "Your checklist has been updated."
+        })
     } catch (error) {
         console.error("Failed to update task:", error);
         toast({
@@ -91,9 +51,6 @@ export default function TasksPage() {
             title: "Update failed",
             description: "Could not save your progress. Please try again.",
         });
-        // Revert optimistic update on failure
-        updatedChecklist[itemIndex].completed = !completed;
-        setTasks(tasks.map(t => t.id === taskId ? { ...t, checklist: updatedChecklist } : t));
     }
   };
 
@@ -111,7 +68,7 @@ export default function TasksPage() {
         <Card className="text-center">
             <CardHeader>
                 <CardTitle>No Tasks Assigned</CardTitle>
-                <CardDescription>Check back later for new volunteer opportunities.</CardDescription>
+                <CardDescription>Check back later for new volunteer opportunities. An NGO can assign you a task from their dashboard.</CardDescription>
             </CardHeader>
         </Card>
       )}
@@ -126,7 +83,7 @@ export default function TasksPage() {
                             <MapPin className="h-4 w-4" /> {task.location}
                         </span>
                         <span className="flex items-center gap-2">
-                            <Calendar className="h-4 w-4" /> {task.date}
+                            <Calendar className="h-4 w-4" /> {task.date ? format(task.date.toDate(), 'PPP') : 'No date'}
                         </span>
                     </CardDescription>
                 </CardHeader>

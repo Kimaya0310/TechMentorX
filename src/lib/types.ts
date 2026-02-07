@@ -21,7 +21,7 @@ export interface Task extends DocumentData {
     requestId?: string;
     status: 'assigned' | 'in-progress' | 'completed' | 'verified';
     checklist: { label: string; completed: boolean }[];
-    date: string; // Should be a Timestamp in production
+    date: Timestamp;
     location: string;
     createdAt: Timestamp;
 }
