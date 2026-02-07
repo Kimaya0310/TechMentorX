@@ -51,10 +51,10 @@ export default function Home() {
           <div className="absolute inset-0 bg-black/50" />
           <div className="container relative mx-auto px-4 text-center text-primary-foreground">
             <h1 className="font-headline text-4xl font-extrabold tracking-tight sm:text-5xl md:text-6xl lg:text-7xl">
-              Building Bridges, Changing Lives
+              Helping hands
             </h1>
             <p className="mx-auto mt-6 max-w-3xl text-lg md:text-xl">
-              Social Bridge connects donors, volunteers, and NGOs to create a powerful network for social good. Join us to make a difference in your community.
+              SocialSync connects donors, volunteers, and NGOs to create a powerful network for social good. Join us to make a difference in your community.
             </p>
             <div className="mt-10 flex justify-center gap-4">
               <Button asChild size="lg" className="bg-accent text-accent-foreground hover:bg-accent/90">
@@ -74,7 +74,7 @@ export default function Home() {
                 A Platform for Meaningful Impact
               </h2>
               <p className="mx-auto mt-4 max-w-2xl text-lg text-muted-foreground">
-                Explore the features that make Social Bridge the ultimate tool for social change.
+                Explore the features that make SocialSync the ultimate tool for social change.
               </p>
             </div>
             <div className="mt-12 grid gap-8 sm:grid-cols-2 lg:grid-cols-4">

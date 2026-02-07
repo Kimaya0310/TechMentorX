@@ -3,7 +3,7 @@ import './globals.css';
 import { Toaster } from "@/components/ui/toaster"
 
 export const metadata: Metadata = {
-  title: 'Social Bridge',
+  title: 'SocialSync',
   description: 'Connecting communities for a better tomorrow.',
 };
 

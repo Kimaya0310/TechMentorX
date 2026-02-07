@@ -52,7 +52,7 @@ const AdminNav = () => {
             <div className="flex flex-col space-y-1">
               <p className="text-sm font-medium leading-none">Admin</p>
               <p className="text-xs leading-none text-muted-foreground">
-                admin@socialbridge.com
+                admin@socialsync.com
               </p>
             </div>
           </DropdownMenuLabel>

@@ -8,7 +8,7 @@ export function LandingFooter() {
       <div className="container mx-auto flex flex-col items-center justify-between gap-6 px-4 py-8 sm:flex-row">
         <Logo href="/" />
         <p className="text-sm text-muted-foreground">
-          © {new Date().getFullYear()} Social Bridge. All rights reserved.
+          © {new Date().getFullYear()} SocialSync. All rights reserved.
         </p>
         <div className="flex items-center gap-4">
           <Link href="#" aria-label="Twitter">
