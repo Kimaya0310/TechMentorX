@@ -1,3 +1,4 @@
+
 import type { DocumentData, Timestamp } from "firebase/firestore";
 
 export interface Request extends DocumentData {
@@ -32,4 +33,18 @@ export interface UserProfile extends DocumentData {
     email: string;
     role: 'donor' | 'volunteer' | 'ngo' | 'beneficiary' | 'company' | 'admin';
     points: number;
+}
+
+export interface Donation extends DocumentData {
+    id: string;
+    donorId: string;
+    ngoId?: string;
+    items: string[];
+    location: string;
+    urgencyLevel: 'low' | 'medium' | 'high' | 'critical';
+    condition: 'new' | 'good' | 'usable';
+    status: 'requested' | 'pending-pickup' | 'in-transit' | 'delivered' | 'cancelled';
+    proofOfDelivery?: string;
+    createdAt: Timestamp;
+    recipient?: string; 
 }
