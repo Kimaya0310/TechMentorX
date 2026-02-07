@@ -66,6 +66,16 @@ service cloud.firestore {
         );
     }
 
+    // Rules for Donation Requests (created by NGOs)
+    match /donation-requests/{donationRequestId} {
+        // Only NGOs can create donation requests
+        allow create: if isRole('ngo') && request.resource.data.ngoId == request.auth.uid;
+        // Anyone signed in can view requests (donors, companies)
+        allow read: if isSignedIn();
+        // Only the creating NGO or an admin can update/delete
+        allow update, delete: if (isRole('ngo') && resource.data.ngoId == request.auth.uid) || isRole('admin');
+    }
+
     // Rules for assistance requests
     match /requests/{requestId} {
         // A beneficiary can create a request for themselves

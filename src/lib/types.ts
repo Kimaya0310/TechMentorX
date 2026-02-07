@@ -33,6 +33,9 @@ export interface UserProfile extends DocumentData {
     email: string;
     role: 'donor' | 'volunteer' | 'ngo' | 'beneficiary' | 'company' | 'admin';
     points: number;
+    skills?: string[];
+    assignedNgoId?: string;
+    companyName?: string;
 }
 
 export interface Donation extends DocumentData {
@@ -47,4 +50,26 @@ export interface Donation extends DocumentData {
     proofOfDelivery?: string;
     createdAt: Timestamp;
     recipient?: string; 
+}
+
+export interface DonationRequest extends DocumentData {
+    id: string;
+    ngoId: string;
+    title: string;
+    itemType: string;
+    quantity: number;
+    urgencyLevel: 'low' | 'medium' | 'high' | 'critical';
+    status: 'open' | 'in-progress' | 'completed' | 'cancelled';
+    createdAt: Timestamp;
+}
+
+export interface CSRProject extends DocumentData {
+    id: string;
+    companyId: string;
+    name: string;
+    budget: number;
+    sponsoredNGOs: string[];
+    impactMetrics: any; // Simplified for now
+    focusArea: string;
+    status: 'planning' | 'active' | 'completed';
 }

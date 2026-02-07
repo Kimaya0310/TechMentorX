@@ -50,6 +50,14 @@
                 "schemeAlerts": { "type": "boolean", "default": false },
                 "emergencyAlerts": { "type": "boolean", "default": true }
             }
+        },
+        "assignedNgoId": {
+          "type": "string",
+          "description": "The UID of the NGO this volunteer is primarily associated with."
+        },
+        "companyName": {
+            "type": "string",
+            "description": "The name of the company for CSR users."
         }
       },
       "required": ["uid", "email", "role", "displayName"]
@@ -112,6 +120,21 @@
       },
       "required": ["donorId", "items", "location", "condition", "status"]
     },
+    "DonationRequest": {
+        "title": "Donation Request",
+        "description": "A request for donations made by an NGO.",
+        "type": "object",
+        "properties": {
+            "ngoId": { "type": "string", "description": "The UID of the NGO making the request." },
+            "title": { "type": "string", "description": "The title of the donation drive." },
+            "itemType": { "type": "string", "description": "The type of item requested (e.g., Winter Clothes, Canned Food)." },
+            "quantity": { "type": "number", "description": "The target quantity of items needed." },
+            "urgencyLevel": { "type": "string", "enum": ["low", "medium", "high", "critical"] },
+            "status": { "type": "string", "enum": ["open", "in-progress", "completed", "cancelled"], "default": "open" },
+            "createdAt": { "type": "string", "format": "date-time" }
+        },
+        "required": ["ngoId", "title", "itemType", "quantity", "urgencyLevel", "status", "createdAt"]
+    },
     "Request": {
         "title": "Assistance Request",
         "description": "A request for assistance made by a beneficiary.",
@@ -164,7 +187,9 @@
         "name": { "type": "string" },
         "budget": { "type": "number" },
         "sponsoredNGOs": { "type": "array", "items": { "type": "string" } },
-        "impactMetrics": { "type": "object" }
+        "impactMetrics": { "type": "object" },
+        "focusArea": { "type": "string" },
+        "status": { "type": "string", "enum": ["planning", "active", "completed"]}
       },
       "required": ["companyId", "name", "budget"]
     }
@@ -188,6 +213,10 @@
     "/donations/{donationId}": {
       "schema": { "$ref": "#/entities/Donation" },
       "description": "Manages all donations on the platform."
+    },
+     "/donation-requests/{donationRequestId}": {
+        "schema": { "$ref": "#/entities/DonationRequest" },
+        "description": "Stores donation requests created by NGOs."
     },
     "/requests/{requestId}": {
         "schema": { "$ref": "#/entities/Request" },
