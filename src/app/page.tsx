@@ -12,21 +12,25 @@ const features = [
     icon: <HeartHandshake className="h-10 w-10 text-primary" />,
     title: "Seamless Donations",
     description: "Easily donate items and track their journey to beneficiaries with full transparency and photo-verification.",
+    href: "/dashboard/donations",
   },
   {
     icon: <Users className="h-10 w-10 text-primary" />,
     title: "Volunteer Coordination",
     description: "Find volunteering opportunities, manage tasks with checklists, and get route support for efficient delivery.",
+    href: "/dashboard/tasks",
   },
   {
     icon: <ShieldCheck className="h-10 w-10 text-primary" />,
     title: "Verified Organizations",
     description: "Connect with trusted and verified NGOs and social enterprises, ensuring your contributions make a real impact.",
+    href: "/organizations",
   },
   {
     icon: <Bot className="h-10 w-10 text-primary" />,
     title: "AI-Powered Assistance",
     description: "Discover relevant welfare schemes with our intelligent recommendation tool, tailored to your personal needs.",
+    href: "/welfare-schemes",
   },
 ];
 
@@ -79,17 +83,19 @@ export default function Home() {
             </div>
             <div className="mt-12 grid gap-8 sm:grid-cols-2 lg:grid-cols-4">
               {features.map((feature) => (
-                <Card key={feature.title} className="text-center transition-transform hover:scale-105 hover:shadow-lg">
-                  <CardHeader>
-                    <div className="mx-auto flex h-20 w-20 items-center justify-center rounded-full bg-secondary">
-                      {feature.icon}
-                    </div>
-                  </CardHeader>
-                  <CardContent>
-                    <CardTitle className="font-headline text-xl">{feature.title}</CardTitle>
-                    <p className="mt-2 text-muted-foreground">{feature.description}</p>
-                  </CardContent>
-                </Card>
+                <Link href={feature.href} key={feature.title} className="flex">
+                  <Card className="flex w-full flex-col text-center transition-transform hover:scale-105 hover:shadow-lg">
+                    <CardHeader>
+                      <div className="mx-auto flex h-20 w-20 items-center justify-center rounded-full bg-secondary">
+                        {feature.icon}
+                      </div>
+                    </CardHeader>
+                    <CardContent className="flex flex-1 flex-col">
+                      <CardTitle className="font-headline text-xl">{feature.title}</CardTitle>
+                      <p className="mt-2 flex-1 text-muted-foreground">{feature.description}</p>
+                    </CardContent>
+                  </Card>
+                </Link>
               ))}
             </div>
           </div>
