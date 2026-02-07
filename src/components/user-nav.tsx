@@ -1,3 +1,4 @@
+
 'use client'
 
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
@@ -12,6 +13,7 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu"
 import { PlaceHolderImages } from "@/lib/placeholder-images"
+import Link from "next/link";
 
 export function UserNav() {
   const userAvatar = PlaceHolderImages.find(img => img.id === 'avatar-1');
@@ -40,8 +42,8 @@ export function UserNav() {
           <DropdownMenuItem>
             Profile
           </DropdownMenuItem>
-          <DropdownMenuItem>
-            Settings
+          <DropdownMenuItem asChild>
+            <Link href="/settings">Settings</Link>
           </DropdownMenuItem>
         </DropdownMenuGroup>
         <DropdownMenuSeparator />
