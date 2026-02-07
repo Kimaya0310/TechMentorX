@@ -23,6 +23,11 @@
           "description": "The user's role in the application.",
           "enum": ["donor", "volunteer", "ngo", "beneficiary", "company", "admin"]
         },
+        "skills": {
+          "type": "array",
+          "items": { "type": "string" },
+          "description": "List of skills for volunteers (e.g., Driving, Teaching, Medical)."
+        },
         "languagePreference": {
             "type": "string",
             "enum": ["en", "hi", "mr"],
@@ -43,6 +48,77 @@
         }
       },
       "required": ["uid", "email", "role", "displayName"]
+    },
+    "Scheme": {
+      "title": "Welfare Scheme",
+      "description": "Details about a government or NGO welfare scheme.",
+      "type": "object",
+      "properties": {
+        "name": { "type": "string" },
+        "description": { "type": "string" },
+        "eligibilityCriteria": {
+          "type": "object",
+          "properties": {
+            "minAge": { "type": "number" },
+            "maxIncome": { "type": "number" },
+            "requiresDisability": { "type": "boolean" },
+            "allowedOccupations": { "type": "array", "items": { "type": "string" } },
+            "allowedLocations": { "type": "array", "items": { "type": "string" } }
+          }
+        },
+        "requiredDocuments": { "type": "array", "items": { "type": "string" } },
+        "applicationSteps": { "type": "array", "items": { "type": "string" } }
+      },
+      "required": ["name", "eligibilityCriteria", "requiredDocuments", "applicationSteps"]
+    },
+    "Application": {
+      "title": "Scheme Application",
+      "description": "Tracks a beneficiary's application for a welfare scheme.",
+      "type": "object",
+      "properties": {
+        "userId": { "type": "string", "description": "The ID of the beneficiary applying." },
+        "schemeId": { "type": "string", "description": "The ID of the scheme being applied for." },
+        "status": {
+          "type": "string",
+          "enum": ["not-started", "applied", "approved", "rejected", "in-progress"],
+          "default": "not-started"
+        },
+        "assistedBy": { "type": "string", "description": "ID of the NGO/volunteer assisting." },
+        "notes": { "type": "string", "description": "Notes from the assistant." }
+      },
+      "required": ["userId", "schemeId", "status"]
+    },
+    "Donation": {
+      "title": "Donation",
+      "description": "Represents a donation of items from a donor to an NGO.",
+      "type": "object",
+      "properties": {
+        "donorId": { "type": "string" },
+        "ngoId": { "type": "string" },
+        "items": { "type": "array", "items": { "type": "string" } },
+        "location": { "type": "string" },
+        "urgencyLevel": { "type": "string", "enum": ["low", "medium", "high", "critical"] },
+        "condition": { "type": "string", "enum": ["new", "good", "usable"] },
+        "status": {
+          "type": "string",
+          "enum": ["requested", "pending-pickup", "in-transit", "delivered", "cancelled"]
+        },
+        "proofOfDelivery": { "type": "string", "format": "uri", "description": "URL to the proof image in Firebase Storage." }
+      },
+      "required": ["donorId", "items", "location", "condition", "status"]
+    },
+    "CSRProject": {
+      "title": "CSR Project",
+      "description": "A project funded or sponsored by a company.",
+      "type": "object",
+      "properties": {
+        "companyId": { "type": "string" },
+        "name": { "type": "string" },
+        "budget": { "type": "number" },
+        "sponsoredNGOs": { "type": "array", "items": { "type": "string" } },
+        "impactMetrics": { "type": "object" }
+      },
+      "required": ["companyId", "name", "budget"]
     }
   },
   "auth": {
@@ -52,6 +128,22 @@
     "/users/{userId}": {
       "schema": { "$ref": "#/entities/UserProfile" },
       "description": "Stores user profile information."
+    },
+    "/schemes/{schemeId}": {
+      "schema": { "$ref": "#/entities/Scheme" },
+      "description": "Stores all available welfare schemes."
+    },
+    "/applications/{applicationId}": {
+      "schema": { "$ref": "#/entities/Application" },
+      "description": "Tracks scheme applications by beneficiaries."
+    },
+    "/donations/{donationId}": {
+      "schema": { "$ref": "#/entities/Donation" },
+      "description": "Manages all donations on the platform."
+    },
+    "/csr-projects/{projectId}": {
+      "schema": { "$ref": "#/entities/CSRProject" },
+      "description": "Stores projects sponsored by companies."
     }
   }
 }

@@ -2,11 +2,68 @@ rules_version = '2';
 
 service cloud.firestore {
   match /databases/{database}/documents {
+
+    function isOwner(userId) {
+      return request.auth != null && request.auth.uid == userId;
+    }
+
+    function isSignedIn() {
+      return request.auth != null;
+    }
+    
+    function getUserRole(userId) {
+      return get(/databases/$(database)/documents/users/$(userId)).data.role;
+    }
+
     // Users can read and update their own profile
     match /users/{userId} {
-      allow read, update: if request.auth != null && request.auth.uid == userId;
+      allow read, update: if isOwner(userId);
       // Anyone can create a user profile during signup
-      allow create: if request.auth != null;
+      allow create: if isSignedIn();
+    }
+    
+    // Schemes are public to all signed-in users
+    match /schemes/{schemeId} {
+        allow read: if isSignedIn();
+        // Only admins can write schemes
+        allow write: if getUserRole(request.auth.uid) == 'admin';
+    }
+
+    // Rules for applications
+    match /applications/{applicationId} {
+        // Beneficiary can create an application for themselves
+        allow create: if isSignedIn() && request.resource.data.userId == request.auth.uid;
+        // Beneficiary can read/update their own applications.
+        // Assisting NGO/Volunteer can also read/update.
+        allow read, update: if isSignedIn() && (
+            resource.data.userId == request.auth.uid ||
+            resource.data.assistedBy == request.auth.uid ||
+            getUserRole(request.auth.uid) == 'ngo' // A simpler rule for NGOs for now
+        );
+    }
+    
+    // Rules for donations
+    match /donations/{donationId} {
+        // Any signed-in user can create a donation
+        allow create: if isSignedIn() && request.resource.data.donorId == request.auth.uid;
+        // All signed-in users can view donations
+        allow read: if isSignedIn();
+        // Only the donor or the assigned NGO can update the donation status
+        allow update: if isSignedIn() && (
+            resource.data.donorId == request.auth.uid ||
+            resource.data.ngoId == request.auth.uid ||
+            getUserRole(request.auth.uid) == 'admin'
+        );
+    }
+
+    // Rules for CSR projects
+    match /csr-projects/{projectId} {
+        // Only a user with the 'company' role can create a project for their company
+        allow create: if getUserRole(request.auth.uid) == 'company' && request.resource.data.companyId == request.auth.uid;
+        // All signed-in users can view CSR projects for transparency
+        allow read: if isSignedIn();
+        // Only the owning company or an admin can update the project
+        allow update: if isOwner(resource.data.companyId) || getUserRole(request.auth.uid) == 'admin';
     }
   }
 }
