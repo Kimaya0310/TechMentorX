@@ -1,8 +1,9 @@
 
+
 "use client";
 
 import Link from "next/link";
-import { usePathname } from "next/navigation";
+import { usePathname, useRouter } from "next/navigation";
 import {
   SidebarProvider,
   Sidebar,
@@ -38,6 +39,13 @@ const navItems = [
 
 const AdminNav = () => {
     const adminAvatar = PlaceHolderImages.find(img => img.id === 'admin-avatar');
+    const router = useRouter();
+
+    const handleLogout = () => {
+        localStorage.removeItem("userRole");
+        router.push('/login');
+    }
+
     return (
         <DropdownMenu>
         <DropdownMenuTrigger asChild>
@@ -58,7 +66,7 @@ const AdminNav = () => {
             </div>
           </DropdownMenuLabel>
           <DropdownMenuSeparator />
-          <DropdownMenuItem>Log out</DropdownMenuItem>
+          <DropdownMenuItem onClick={handleLogout}>Log out</DropdownMenuItem>
         </DropdownMenuContent>
       </DropdownMenu>
     )

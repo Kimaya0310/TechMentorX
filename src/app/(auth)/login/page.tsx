@@ -30,6 +30,7 @@ export default function LoginPage() {
 
   const handleLogin = () => {
     // This is a mock login. We will replace this with Firebase Auth.
+    localStorage.setItem("userRole", role);
     console.log(`Logging in as ${role}...`);
     switch (role) {
       case "ngo":
@@ -43,6 +44,9 @@ export default function LoginPage() {
         break;
       case "company":
         router.push('/dashboard/company');
+        break;
+      case "admin":
+        router.push('/admin');
         break;
       default:
         router.push('/dashboard');
@@ -78,6 +82,7 @@ export default function LoginPage() {
               <SelectItem value="ngo">NGO</SelectItem>
               <SelectItem value="beneficiary">Beneficiary</SelectItem>
               <SelectItem value="company">Big Company (CSR)</SelectItem>
+              <SelectItem value="admin">Admin</SelectItem>
             </SelectContent>
           </Select>
         </div>

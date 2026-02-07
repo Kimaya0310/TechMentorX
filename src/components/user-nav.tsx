@@ -1,4 +1,5 @@
 
+
 'use client'
 
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
@@ -14,9 +15,17 @@ import {
 } from "@/components/ui/dropdown-menu"
 import { PlaceHolderImages } from "@/lib/placeholder-images"
 import Link from "next/link";
+import { useRouter } from "next/navigation"
 
 export function UserNav() {
   const userAvatar = PlaceHolderImages.find(img => img.id === 'avatar-1');
+  const router = useRouter();
+
+  const handleLogout = () => {
+    // This is a mock logout. We will replace this with Firebase Auth.
+    localStorage.removeItem("userRole");
+    router.push('/login');
+  }
 
   return (
     <DropdownMenu>
@@ -47,7 +56,7 @@ export function UserNav() {
           </DropdownMenuItem>
         </DropdownMenuGroup>
         <DropdownMenuSeparator />
-        <DropdownMenuItem>
+        <DropdownMenuItem onClick={handleLogout}>
           Log out
         </DropdownMenuItem>
       </DropdownMenuContent>

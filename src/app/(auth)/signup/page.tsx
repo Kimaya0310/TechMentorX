@@ -21,13 +21,16 @@ import {
 } from "@/components/ui/select";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
+import { useState } from "react";
 
 export default function SignupPage() {
   const router = useRouter();
+  const [role, setRole] = useState("donor");
 
   const handleSignup = () => {
     // This is a mock signup. We will replace this with Firebase Auth.
-    console.log("Signing up...");
+    localStorage.setItem("userRole", role);
+    console.log("Signing up as...", role);
     router.push('/dashboard');
   };
 
@@ -54,7 +57,7 @@ export default function SignupPage() {
         </div>
         <div className="grid gap-2">
           <Label htmlFor="role">I am a...</Label>
-          <Select required>
+          <Select onValueChange={setRole} defaultValue="donor" required>
             <SelectTrigger id="role">
               <SelectValue placeholder="Select your role" />
             </SelectTrigger>

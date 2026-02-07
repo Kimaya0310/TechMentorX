@@ -1,6 +1,8 @@
 
+
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
+import { Bot, Stethoscope, Utensils } from "lucide-react";
 
 export default function BeneficiaryDashboardPage() {
     return (
@@ -9,7 +11,7 @@ export default function BeneficiaryDashboardPage() {
             <div className="grid gap-6 lg:grid-cols-2">
                 <Card>
                     <CardHeader>
-                        <CardTitle>Request Assistance</CardTitle>
+                        <CardTitle className="flex items-center gap-2"><Utensils /> Request Assistance</CardTitle>
                         <CardDescription>Request food, clothing, or other essentials.</CardDescription>
                     </CardHeader>
                     <CardContent>
@@ -27,8 +29,8 @@ export default function BeneficiaryDashboardPage() {
                 </Card>
                  <Card>
                     <CardHeader>
-                        <CardTitle>Eligible Schemes</CardTitle>
-                        <CardDescription>Find welfare schemes you might be eligible for.</CardDescription>
+                        <CardTitle className="flex items-center gap-2"><Bot /> Eligible Schemes</CardTitle>
+                        <CardDescription>Use our AI assistant to find welfare schemes you might be eligible for.</CardDescription>
                     </CardHeader>
                     <CardContent>
                         <Button>Find Schemes</Button>
@@ -36,8 +38,8 @@ export default function BeneficiaryDashboardPage() {
                 </Card>
                  <Card>
                     <CardHeader>
-                        <CardTitle>Disability Support</CardTitle>
-                        <CardDescription>Request accessibility aids.</CardDescription>
+                        <CardTitle className="flex items-center gap-2"><Stethoscope /> Disability Support</CardTitle>
+                        <CardDescription>Request accessibility aids like wheelchairs and medical equipment.</CardDescription>
                     </CardHeader>
                     <CardContent>
                         <Button>Request Support</Button>

@@ -29,6 +29,7 @@ import {
   Briefcase,
 } from "lucide-react";
 import { UserNav } from "@/components/user-nav";
+import { useEffect, useState } from "react";
 
 
 const navItems = [
@@ -39,7 +40,7 @@ const navItems = [
   { href: "/welfare-schemes", label: "Welfare Schemes", icon: BotMessageSquare },
 ];
 
-const getNavItemsByRole = (role?: string) => {
+const getNavItemsByRole = (role?: string | null) => {
   switch (role) {
     case 'ngo':
       return [
@@ -53,7 +54,8 @@ const getNavItemsByRole = (role?: string) => {
       ];
     case 'volunteer':
         return [
-          { href: "/dashboard/volunteer", label: "Volunteer Tasks", icon: ListChecks },
+          { href: "/dashboard/volunteer", label: "Volunteer Hub", icon: Users },
+          { href: "/dashboard/tasks", label: "Volunteer Tasks", icon: ListChecks },
           { href: "/dashboard/rewards", label: "My Rewards", icon: Award },
         ];
     case 'company':
@@ -61,7 +63,7 @@ const getNavItemsByRole = (role?: string) => {
           { href: "/dashboard/company", label: "CSR Dashboard", icon: Briefcase },
           { href: "/organizations", label: "Partners", icon: Building },
         ];
-    default:
+    default: // donor
       return navItems;
   }
 }
@@ -73,8 +75,15 @@ export default function DashboardLayout({
   children: React.ReactNode;
 }) {
   const pathname = usePathname();
-  const role = pathname.split('/')[2]; // a bit of a hack for now
-  const currentNavItems = getNavItemsByRole(role);
+  const [userRole, setUserRole] = useState<string | null>(null);
+
+  useEffect(() => {
+    // We can't access localStorage on the server, so we do it in useEffect.
+    const role = localStorage.getItem("userRole");
+    setUserRole(role);
+  }, [pathname]);
+  
+  const currentNavItems = getNavItemsByRole(userRole);
 
 
   return (
@@ -90,7 +99,7 @@ export default function DashboardLayout({
                 <SidebarMenuItem key={item.href}>
                   <SidebarMenuButton
                     asChild
-                    isActive={pathname.startsWith(item.href) && (item.href !== '/dashboard' || pathname === '/dashboard')}
+                    isActive={pathname === item.href}
                     tooltip={item.label}
                   >
                     <Link href={item.href}>
