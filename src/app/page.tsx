@@ -51,7 +51,7 @@ export default function Home() {
           <div className="absolute inset-0 bg-black/50" />
           <div className="container relative mx-auto px-4 text-center text-primary-foreground">
             <h1 className="font-headline text-4xl font-extrabold tracking-tight sm:text-5xl md:text-6xl lg:text-7xl">
-              Helping hands
+              Helping Hands to Happy Hearts
             </h1>
             <p className="mx-auto mt-6 max-w-3xl text-lg md:text-xl">
               SocialSync connects donors, volunteers, and NGOs to create a powerful network for social good. Join us to make a difference in your community.
