@@ -22,16 +22,57 @@ import {
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
+import { getAuth, createUserWithEmailAndPassword } from "firebase/auth";
+import { getFirestore, doc, setDoc } from "firebase/firestore";
+import { useToast } from "@/hooks/use-toast";
+import { Loader2 } from "lucide-react";
 
 export default function SignupPage() {
   const router = useRouter();
+  const { toast } = useToast();
+  const [fullName, setFullName] = useState('');
+  const [email, setEmail] = useState('');
+  const [password, setPassword] = useState('');
   const [role, setRole] = useState("donor");
+  const [loading, setLoading] = useState(false);
 
-  const handleSignup = () => {
-    // This is a mock signup. We will replace this with Firebase Auth.
-    localStorage.setItem("userRole", role);
-    console.log("Signing up as...", role);
-    router.push('/dashboard');
+  const handleSignup = async () => {
+    setLoading(true);
+    const auth = getAuth();
+    const firestore = getFirestore();
+
+    try {
+      const userCredential = await createUserWithEmailAndPassword(auth, email, password);
+      const user = userCredential.user;
+
+      // Now, create a user profile document in Firestore
+      await setDoc(doc(firestore, "users", user.uid), {
+        uid: user.uid,
+        displayName: fullName,
+        email: user.email,
+        role: role,
+        languagePreference: 'en',
+        darkModeEnabled: false,
+        notificationSettings: {
+          donationUpdates: true,
+          volunteerTasks: true,
+          schemeAlerts: false,
+          emergencyAlerts: true
+        }
+      });
+      
+      router.push('/dashboard');
+
+    } catch (error: any) {
+      console.error("Signup failed:", error);
+      toast({
+        variant: "destructive",
+        title: "Signup Failed",
+        description: error.message || "An unexpected error occurred.",
+      });
+    } finally {
+      setLoading(false);
+    }
   };
 
   return (
@@ -45,15 +86,15 @@ export default function SignupPage() {
       <CardContent className="grid gap-4">
         <div className="grid gap-2">
           <Label htmlFor="full-name">Full Name</Label>
-          <Input id="full-name" placeholder="John Doe" required />
+          <Input id="full-name" placeholder="John Doe" required value={fullName} onChange={(e) => setFullName(e.target.value)} />
         </div>
         <div className="grid gap-2">
           <Label htmlFor="email">Email</Label>
-          <Input id="email" type="email" placeholder="m@example.com" required />
+          <Input id="email" type="email" placeholder="m@example.com" required value={email} onChange={(e) => setEmail(e.target.value)} />
         </div>
         <div className="grid gap-2">
           <Label htmlFor="password">Password</Label>
-          <Input id="password" type="password" required />
+          <Input id="password" type="password" required value={password} onChange={(e) => setPassword(e.target.value)} />
         </div>
         <div className="grid gap-2">
           <Label htmlFor="role">I am a...</Label>
@@ -72,7 +113,10 @@ export default function SignupPage() {
         </div>
       </CardContent>
       <CardFooter className="flex flex-col">
-        <Button className="w-full" onClick={handleSignup}>Create Account</Button>
+        <Button className="w-full" onClick={handleSignup} disabled={loading}>
+          {loading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+          Create Account
+        </Button>
         <p className="mt-4 text-center text-sm text-muted-foreground">
           Already have an account?{" "}
           <Link href="/login" className="underline hover:text-primary">

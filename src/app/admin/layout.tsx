@@ -3,7 +3,7 @@
 "use client";
 
 import Link from "next/link";
-import { usePathname, useRouter } from "next/navigation";
+import { useRouter, usePathname } from "next/navigation";
 import {
   SidebarProvider,
   Sidebar,
@@ -29,6 +29,9 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { PlaceHolderImages } from "@/lib/placeholder-images";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuLabel, DropdownMenuSeparator, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
 import { Button } from "@/components/ui/button";
+import { useAuth } from "@/firebase";
+import { signOut } from "firebase/auth";
+import { useUser } from "@/firebase/auth/use-user";
 
 const navItems = [
   { href: "/admin", label: "Dashboard", icon: LayoutDashboard },
@@ -40,9 +43,11 @@ const navItems = [
 const AdminNav = () => {
     const adminAvatar = PlaceHolderImages.find(img => img.id === 'admin-avatar');
     const router = useRouter();
+    const auth = useAuth();
+    const { user } = useUser();
 
-    const handleLogout = () => {
-        localStorage.removeItem("userRole");
+    const handleLogout = async () => {
+        await signOut(auth);
         router.push('/login');
     }
 
@@ -59,9 +64,9 @@ const AdminNav = () => {
         <DropdownMenuContent className="w-56" align="end" forceMount>
           <DropdownMenuLabel className="font-normal">
             <div className="flex flex-col space-y-1">
-              <p className="text-sm font-medium leading-none">Admin</p>
+              <p className="text-sm font-medium leading-none">{user?.displayName || 'Admin'}</p>
               <p className="text-xs leading-none text-muted-foreground">
-                admin@socialsync.com
+                {user?.email}
               </p>
             </div>
           </DropdownMenuLabel>
@@ -78,6 +83,23 @@ export default function AdminLayout({
   children: React.ReactNode;
 }) {
   const pathname = usePathname();
+  const { user, loading } = useUser();
+  const router = useRouter();
+
+  React.useEffect(() => {
+    if (!loading && (!user || user.role !== 'admin')) {
+      router.push('/login');
+    }
+  }, [user, loading, router]);
+
+  if (loading || !user) {
+      // You can return a loading spinner here
+      return (
+          <div className="flex h-screen items-center justify-center">
+              <p>Loading...</p>
+          </div>
+      )
+  }
 
   return (
     <SidebarProvider>

@@ -1,5 +1,4 @@
 
-
 'use client';
 
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
@@ -8,13 +7,78 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Switch } from "@/components/ui/switch";
 import { Button } from "@/components/ui/button";
 import { Separator } from "@/components/ui/separator";
+import { useUser } from "@/firebase/auth/use-user";
+import { getFirestore, doc, updateDoc } from "firebase/firestore";
+import { useToast } from "@/hooks/use-toast";
+import { useEffect, useState } from "react";
+import { Loader2 } from "lucide-react";
+import { useRouter } from "next/navigation";
 
 export default function SettingsPage() {
-    // Mock user data for now. We'll replace with real data from Firestore.
-    const user = {
-        name: "Alex Doe",
-        email: "alex.doe@example.com",
+    const { user, loading } = useUser();
+    const router = useRouter();
+    const firestore = getFirestore();
+    const { toast } = useToast();
+    
+    // Local state to manage UI and avoid waiting for Firestore roundtrip
+    const [darkMode, setDarkMode] = useState(user?.darkModeEnabled || false);
+    const [language, setLanguage] = useState(user?.languagePreference || 'en');
+    const [notifications, setNotifications] = useState(user?.notificationSettings || {});
+
+    useEffect(() => {
+        if (!loading && !user) {
+            router.push('/login');
+        }
+        if (user) {
+            setDarkMode(user.darkModeEnabled);
+            setLanguage(user.languagePreference);
+            setNotifications(user.notificationSettings);
+        }
+    }, [user, loading, router]);
+    
+    useEffect(() => {
+        // Apply dark mode to the body
+        if (darkMode) {
+            document.documentElement.classList.add('dark');
+        } else {
+            document.documentElement.classList.remove('dark');
+        }
+    }, [darkMode]);
+
+
+    const handleSettingChange = async (key: string, value: any) => {
+        if (!user) return;
+        
+        try {
+            const userDocRef = doc(firestore, "users", user.uid);
+            await updateDoc(userDocRef, { [key]: value });
+            toast({
+                title: "Settings updated",
+                description: "Your preferences have been saved.",
+            });
+        } catch (error: any) {
+            console.error("Failed to update settings:", error);
+            toast({
+                variant: "destructive",
+                title: "Update failed",
+                description: "Could not save your preferences.",
+            });
+        }
     };
+
+    const handleNotificationChange = (key: string, value: boolean) => {
+        const newSettings = { ...notifications, [key]: value };
+        setNotifications(newSettings);
+        handleSettingChange('notificationSettings', newSettings);
+    }
+    
+    if (loading || !user) {
+        return (
+            <div className="flex h-screen items-center justify-center">
+                <Loader2 className="h-8 w-8 animate-spin" />
+            </div>
+        );
+    }
 
     return (
         <div className="container mx-auto max-w-4xl py-12">
@@ -33,23 +97,23 @@ export default function SettingsPage() {
                         <CardContent className="space-y-4">
                             <div>
                                 <Label htmlFor="name">Full Name</Label>
-                                <p id="name" className="text-lg">{user.name}</p>
+                                <p id="name" className="text-lg">{user.displayName}</p>
                             </div>
                             <div>
                                 <Label htmlFor="email">Email</Label>
                                 <p id="email" className="text-lg">{user.email}</p>
                             </div>
-                            <Button variant="outline">Update Profile</Button>
+                            <Button variant="outline" disabled>Update Profile</Button>
                             <Separator className="my-6" />
                             <div className="space-y-2">
                                 <h3 className="font-medium">Account Actions</h3>
                                 <div className="flex items-center justify-between">
                                     <p>Change Password</p>
-                                    <Button variant="outline">Change</Button>
+                                    <Button variant="outline" disabled>Change</Button>
                                 </div>
                                 <div className="flex items-center justify-between">
                                     <p className="text-destructive">Delete Account</p>
-                                    <Button variant="destructive">Delete</Button>
+                                    <Button variant="destructive" disabled>Delete</Button>
                                 </div>
                             </div>
                         </CardContent>
@@ -72,11 +136,11 @@ export default function SettingsPage() {
                         <CardContent className="space-y-6">
                             <div className="flex items-center justify-between">
                                 <Label htmlFor="dark-mode">Dark Mode</Label>
-                                <Switch id="dark-mode" />
+                                <Switch id="dark-mode" checked={darkMode} onCheckedChange={(checked) => { setDarkMode(checked); handleSettingChange('darkModeEnabled', checked)}} />
                             </div>
                             <div className="space-y-2">
                                 <Label htmlFor="language">Language</Label>
-                                <Select defaultValue="en">
+                                <Select value={language} onValueChange={(value) => {setLanguage(value); handleSettingChange('languagePreference', value)}}>
                                     <SelectTrigger id="language">
                                         <SelectValue placeholder="Select language" />
                                     </SelectTrigger>
@@ -108,19 +172,19 @@ export default function SettingsPage() {
                         <CardContent className="space-y-4">
                             <div className="flex items-center justify-between">
                                 <Label htmlFor="donation-updates">Donation Updates</Label>
-                                <Switch id="donation-updates" defaultChecked />
+                                <Switch id="donation-updates" checked={notifications.donationUpdates} onCheckedChange={(checked) => handleNotificationChange('donationUpdates', checked)} />
                             </div>
                             <div className="flex items-center justify-between">
                                 <Label htmlFor="volunteer-tasks">Volunteer Tasks</Label>
-                                <Switch id="volunteer-tasks" defaultChecked />
+                                <Switch id="volunteer-tasks" checked={notifications.volunteerTasks} onCheckedChange={(checked) => handleNotificationChange('volunteerTasks', checked)} />
                             </div>
                             <div className="flex items-center justify-between">
                                 <Label htmlFor="scheme-alerts">Welfare Scheme Alerts</Label>
-                                <Switch id="scheme-alerts" />
+                                <Switch id="scheme-alerts" checked={notifications.schemeAlerts} onCheckedChange={(checked) => handleNotificationChange('schemeAlerts', checked)} />
                             </div>
                             <div className="flex items-center justify-between">
                                 <Label htmlFor="emergency-alerts">Emergency Drive Alerts</Label>
-                                <Switch id="emergency-alerts" defaultChecked />
+                                <Switch id="emergency-alerts" checked={notifications.emergencyAlerts} onCheckedChange={(checked) => handleNotificationChange('emergencyAlerts', checked)} />
                             </div>
                         </CardContent>
                     </Card>

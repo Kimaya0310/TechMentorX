@@ -1,9 +1,8 @@
 
+'use client';
 
-"use client";
-
-import Link from "next/link";
-import { usePathname } from "next/navigation";
+import Link from 'next/link';
+import { usePathname, useRouter } from 'next/navigation';
 import {
   SidebarProvider,
   Sidebar,
@@ -15,8 +14,8 @@ import {
   SidebarMenuButton,
   SidebarInset,
   SidebarFooter,
-} from "@/components/ui/sidebar";
-import { Logo } from "@/components/logo";
+} from '@/components/ui/sidebar';
+import { Logo } from '@/components/logo';
 import {
   Award,
   BotMessageSquare,
@@ -27,47 +26,49 @@ import {
   Building,
   Users,
   Briefcase,
-} from "lucide-react";
-import { UserNav } from "@/components/user-nav";
-import { useEffect, useState } from "react";
-
+} from 'lucide-react';
+import { UserNav } from '@/components/user-nav';
+import { useEffect } from 'react';
+import { useUser } from '@/firebase/auth/use-user';
+import { Loader2 } from 'lucide-react';
 
 const navItems = [
-  { href: "/dashboard", label: "Dashboard", icon: LayoutDashboard },
-  { href: "/dashboard/donations", label: "Donations", icon: HeartHandshake },
-  { href: "/dashboard/tasks", label: "My Tasks", icon: ListChecks },
-  { href: "/dashboard/rewards", label: "Rewards", icon: Award },
-  { href: "/welfare-schemes", label: "Welfare Schemes", icon: BotMessageSquare },
+  { href: '/dashboard', label: 'Dashboard', icon: LayoutDashboard },
+  { href: '/dashboard/donations', label: 'Donations', icon: HeartHandshake },
+  { href: '/dashboard/tasks', label: 'My Tasks', icon: ListChecks },
+  { href: '/dashboard/rewards', label: 'Rewards', icon: Award },
+  { href: '/welfare-schemes', label: 'Welfare Schemes', icon: BotMessageSquare },
 ];
 
 const getNavItemsByRole = (role?: string | null) => {
   switch (role) {
     case 'ngo':
       return [
-        { href: "/dashboard/ngo", label: "NGO Dashboard", icon: Building },
-        { href: "/dashboard/donations", label: "Donation Requests", icon: HeartHandshake },
+        { href: '/dashboard/ngo', label: 'NGO Dashboard', icon: Building },
+        { href: '/dashboard/donations', label: 'Donation Requests', icon: HeartHandshake },
       ];
     case 'beneficiary':
       return [
-        { href: "/dashboard/beneficiary", label: "Beneficiary Hub", icon: Users },
-        { href: "/welfare-schemes", label: "Find Schemes", icon: BotMessageSquare },
+        { href: '/dashboard/beneficiary', label: 'Beneficiary Hub', icon: Users },
+        { href: '/welfare-schemes', label: 'Find Schemes', icon: BotMessageSquare },
       ];
     case 'volunteer':
-        return [
-          { href: "/dashboard/volunteer", label: "Volunteer Hub", icon: Users },
-          { href: "/dashboard/tasks", label: "Volunteer Tasks", icon: ListChecks },
-          { href: "/dashboard/rewards", label: "My Rewards", icon: Award },
-        ];
+      return [
+        { href: '/dashboard/volunteer', label: 'Volunteer Hub', icon: Users },
+        { href: '/dashboard/tasks', label: 'Volunteer Tasks', icon: ListChecks },
+        { href: '/dashboard/rewards', label: 'My Rewards', icon: Award },
+      ];
     case 'company':
-        return [
-          { href: "/dashboard/company", label: "CSR Dashboard", icon: Briefcase },
-          { href: "/organizations", label: "Partners", icon: Building },
-        ];
+      return [
+        { href: '/dashboard/company', label: 'CSR Dashboard', icon: Briefcase },
+        { href: '/organizations', label: 'Partners', icon: Building },
+      ];
+    case 'admin':
+      return []; // Admin has its own layout
     default: // donor
       return navItems;
   }
-}
-
+};
 
 export default function DashboardLayout({
   children,
@@ -75,16 +76,40 @@ export default function DashboardLayout({
   children: React.ReactNode;
 }) {
   const pathname = usePathname();
-  const [userRole, setUserRole] = useState<string | null>(null);
+  const router = useRouter();
+  const { user, loading } = useUser();
 
   useEffect(() => {
-    // We can't access localStorage on the server, so we do it in useEffect.
-    const role = localStorage.getItem("userRole");
-    setUserRole(role);
-  }, [pathname]);
-  
-  const currentNavItems = getNavItemsByRole(userRole);
+    if (!loading && !user) {
+      router.push('/login');
+    }
+  }, [user, loading, router]);
 
+  useEffect(() => {
+    if (user && user.role) {
+      if (user.role === 'admin') {
+          router.push('/admin');
+          return;
+      }
+      if (pathname === '/dashboard') {
+        const roleDashboard = user.role === 'donor' ? '/dashboard' : `/dashboard/${user.role}`;
+        if (roleDashboard !== '/dashboard') {
+          router.push(roleDashboard);
+        }
+      }
+    }
+  }, [user, pathname, router]);
+
+  if (loading || !user) {
+    return (
+      <div className="flex h-screen items-center justify-center">
+        <Loader2 className="h-8 w-8 animate-spin" />
+      </div>
+    );
+  }
+
+  const currentNavItems = getNavItemsByRole(user?.role);
+  if (user?.role === 'admin') return null; // Admin layout will handle it
 
   return (
     <SidebarProvider>
@@ -97,11 +122,7 @@ export default function DashboardLayout({
             <SidebarMenu>
               {currentNavItems.map((item) => (
                 <SidebarMenuItem key={item.href}>
-                  <SidebarMenuButton
-                    asChild
-                    isActive={pathname === item.href}
-                    tooltip={item.label}
-                  >
+                  <SidebarMenuButton asChild isActive={pathname === item.href} tooltip={item.label}>
                     <Link href={item.href}>
                       <item.icon />
                       <span>{item.label}</span>

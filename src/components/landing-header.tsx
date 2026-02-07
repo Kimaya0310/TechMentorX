@@ -14,17 +14,28 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "./ui/dropdown-menu";
+import { useUser } from "@/firebase/auth/use-user";
+import { useAuth } from "@/firebase";
+import { signOut } from "firebase/auth";
+import { useRouter } from "next/navigation";
+
 
 const navLinks = [
   { href: "/#facilities", label: "Facilities" },
   { href: "/welfare-schemes", label: "Welfare Schemes" },
-  { href: "/#about", label: "About" },
+  { href: "/organizations", label: "Organizations" },
 ];
 
 export function LandingHeader() {
   const [isOpen, setIsOpen] = useState(false);
-  // Mock login state for now.
-  const isLoggedIn = false;
+  const { user } = useUser();
+  const auth = useAuth();
+  const router = useRouter();
+
+  const handleLogout = async () => {
+    await signOut(auth);
+    router.push('/login');
+  };
 
   return (
     <header className="absolute top-0 z-50 w-full bg-transparent py-4">
@@ -48,13 +59,16 @@ export function LandingHeader() {
               </Button>
             </DropdownMenuTrigger>
             <DropdownMenuContent align="end">
-              {isLoggedIn ? (
+              {user ? (
                 <>
+                  <DropdownMenuItem asChild>
+                    <Link href="/dashboard">Dashboard</Link>
+                  </DropdownMenuItem>
                   <DropdownMenuItem asChild>
                     <Link href="/settings">Settings</Link>
                   </DropdownMenuItem>
                   <DropdownMenuSeparator />
-                  <DropdownMenuItem>
+                  <DropdownMenuItem onClick={handleLogout}>
                     Logout
                   </DropdownMenuItem>
                 </>
@@ -70,9 +84,11 @@ export function LandingHeader() {
               )}
             </DropdownMenuContent>
           </DropdownMenu>
-          <Button asChild className="bg-accent text-accent-foreground hover:bg-accent/90">
-            <Link href="/signup">Sign Up</Link>
-          </Button>
+          {!user && (
+            <Button asChild className="bg-accent text-accent-foreground hover:bg-accent/90">
+              <Link href="/signup">Sign Up</Link>
+            </Button>
+          )}
         </div>
         
         <div className="md:hidden">
@@ -93,12 +109,12 @@ export function LandingHeader() {
                   ))}
                 </nav>
                 <div className="mt-6 flex flex-col gap-4">
-                   {isLoggedIn ? (
+                   {user ? (
                     <>
                       <Button asChild variant="outline">
-                        <Link href="/settings">Settings</Link>
+                        <Link href="/dashboard">Dashboard</Link>
                       </Button>
-                      <Button>Logout</Button>
+                      <Button onClick={handleLogout}>Logout</Button>
                     </>
                   ) : (
                     <>

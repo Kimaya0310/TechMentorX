@@ -1,0 +1,57 @@
+{
+  "entities": {
+    "UserProfile": {
+      "title": "User Profile",
+      "description": "Represents a user's profile in the system.",
+      "type": "object",
+      "properties": {
+        "uid": {
+          "type": "string",
+          "description": "The user's unique ID from Firebase Authentication."
+        },
+        "displayName": {
+          "type": "string",
+          "description": "The user's display name."
+        },
+        "email": {
+          "type": "string",
+          "format": "email",
+          "description": "The user's email address."
+        },
+        "role": {
+          "type": "string",
+          "description": "The user's role in the application.",
+          "enum": ["donor", "volunteer", "ngo", "beneficiary", "company", "admin"]
+        },
+        "languagePreference": {
+            "type": "string",
+            "enum": ["en", "hi", "mr"],
+            "default": "en"
+        },
+        "darkModeEnabled": {
+            "type": "boolean",
+            "default": false
+        },
+        "notificationSettings": {
+            "type": "object",
+            "properties": {
+                "donationUpdates": { "type": "boolean", "default": true },
+                "volunteerTasks": { "type": "boolean", "default": true },
+                "schemeAlerts": { "type": "boolean", "default": false },
+                "emergencyAlerts": { "type": "boolean", "default": true }
+            }
+        }
+      },
+      "required": ["uid", "email", "role", "displayName"]
+    }
+  },
+  "auth": {
+    "providers": ["email"]
+  },
+  "firestore": {
+    "/users/{userId}": {
+      "schema": { "$ref": "#/entities/UserProfile" },
+      "description": "Stores user profile information."
+    }
+  }
+}
