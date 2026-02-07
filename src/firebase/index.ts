@@ -1,10 +1,17 @@
+
 import { initializeApp, getApps, getApp, FirebaseApp } from 'firebase/app';
 import { getAuth, Auth } from 'firebase/auth';
 import { getFirestore, Firestore } from 'firebase/firestore';
 import { firebaseConfig } from './config';
 
 // Initializes and returns a Firebase app instance.
-function createFirebaseApp(): FirebaseApp {
+function createFirebaseApp(): FirebaseApp | null {
+  // Prevent app initialization if config is missing
+  if (!firebaseConfig.apiKey) {
+    console.error("Firebase configuration error: API key is missing. The app cannot connect to Firebase.");
+    return null;
+  }
+
   if (getApps().length > 0) {
     return getApp();
   }
@@ -16,8 +23,13 @@ export function initializeFirebase(): {
   firebaseApp: FirebaseApp;
   auth: Auth;
   firestore: Firestore;
-} {
+} | null {
   const firebaseApp = createFirebaseApp();
+
+  if (!firebaseApp) {
+    return null;
+  }
+
   const auth = getAuth(firebaseApp);
   const firestore = getFirestore(firebaseApp);
   
