@@ -49,8 +49,12 @@ service cloud.firestore {
     match /donations/{donationId} {
         // Any signed-in user can create a donation
         allow create: if isSignedIn() && request.resource.data.donorId == request.auth.uid;
-        // Let any signed-in user query the collection.
-        allow list: if isSignedIn();
+        
+        // Only donors, NGOs, and admins can query the donations collection.
+        allow list: if isSignedIn() && (
+          get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role in ['donor', 'ngo', 'admin']
+        );
+        
         // Only allow getting a doc if you're the donor, assigned NGO, an admin, or an NGO viewing a requested donation.
         allow get: if isSignedIn() && (
             resource.data.donorId == request.auth.uid ||
