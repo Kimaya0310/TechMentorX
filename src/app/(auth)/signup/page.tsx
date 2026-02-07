@@ -51,6 +51,7 @@ export default function SignupPage() {
         displayName: fullName,
         email: user.email,
         role: role,
+        points: 0,
         languagePreference: 'en',
         darkModeEnabled: false,
         notificationSettings: {
